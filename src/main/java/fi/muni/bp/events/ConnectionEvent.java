@@ -18,9 +18,9 @@ public class ConnectionEvent {
     private DateTime date_first_seen;
     private String src_port;
     private String dst_port;
-    private long protocol;
+    private String protocol;
     private String flags;
-    private long tos;
+    private String tos;
     private long packets;
     private int hash;
 
@@ -31,14 +31,14 @@ public class ConnectionEvent {
     public ConnectionEvent(@JsonProperty("dst_ip_addr") String dst_ip_addr,
                       @JsonProperty("src_ip_addr") String src_ip_addr,
                       @JsonProperty("bytes") long bytes,
-                      @JsonProperty("timestamp") DateTime timestamp,
+                      @JsonProperty("date_last_seen") DateTime timestamp,
                       @JsonProperty("duration") String duration,
                       @JsonProperty("date_first_seen") DateTime date_first_seen,
                       @JsonProperty("dst_port") String dst_port,
                       @JsonProperty("src_port") String src_port,
-                      @JsonProperty("protocol") long protocol,
+                      @JsonProperty("protocol") String protocol,
                       @JsonProperty("flags") String flags,
-                      @JsonProperty("tos") long tos,
+                      @JsonProperty("tos") String tos,
                       @JsonProperty("packets") long packets) {
         this.hash = src_ip_addr.hashCode();
         this.dst_ip_addr = dst_ip_addr;
@@ -127,11 +127,11 @@ public class ConnectionEvent {
         this.dst_port = dst_port;
     }
 
-    public long getProtocol() {
+    public String getProtocol() {
         return protocol;
     }
 
-    public void setProtocol(long protocol) {
+    public void setProtocol(String protocol) {
         this.protocol = protocol;
     }
 
@@ -143,11 +143,11 @@ public class ConnectionEvent {
         this.flags = flags;
     }
 
-    public long getTos() {
+    public String getTos() {
         return tos;
     }
 
-    public void setTos(long tos) {
+    public void setTos(String tos) {
         this.tos = tos;
     }
 
@@ -194,9 +194,7 @@ public class ConnectionEvent {
         result = 31 * result + (date_first_seen != null ? date_first_seen.hashCode() : 0);
         result = 31 * result + (src_port != null ? src_port.hashCode() : 0);
         result = 31 * result + (dst_port != null ? dst_port.hashCode() : 0);
-        result = 31 * result + (int) (protocol ^ (protocol >>> 32));
         result = 31 * result + (flags != null ? flags.hashCode() : 0);
-        result = 31 * result + (int) (tos ^ (tos >>> 32));
         result = 31 * result + (int) (packets ^ (packets >>> 32));
         return result;
     }
