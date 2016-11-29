@@ -1,0 +1,43 @@
+package fi.muni.bp;
+
+import com.arangodb.ArangoDriver;
+import com.arangodb.ArangoException;
+import com.arangodb.entity.*;
+import com.google.gson.JsonElement;
+import fi.muni.bp.ArangoUtilities.BasicUtilities;
+import fi.muni.bp.events.ConnectionEvent;
+import org.joda.time.DateTime;
+
+/**
+ * @author Ivan Moscovic on 28.11.2016.
+ */
+public class MainArango {
+
+    public static void main(String[] args) throws ArangoException {
+
+
+        ArangoDriver arangoDriver = new ArangoDriver(BasicUtilities.setConfiguration("root", "root"));
+        BasicUtilities basicUtilities = new BasicUtilities(arangoDriver);
+
+        basicUtilities.createGraphWithCollections();
+        ConnectionEvent connectionEvent = new ConnectionEvent("fds", "dad", 54, DateTime.now(),
+                "das", DateTime.now(),"dasda", "dsa", "dasd","dasd","dadsa", 545);
+
+        DocumentEntity<ConnectionEvent> con = arangoDriver.graphCreateVertex
+                ("IPgraph", "IPaddr", connectionEvent , true);
+        DocumentEntity<ConnectionEvent> con2 = arangoDriver.graphCreateVertex
+                ("IPgraph", "IPaddr", connectionEvent , true);
+        //arangoDriver.graphCreateEdge("IPgraph", "isConnected", null,con.getDocumentHandle(), con2.getDocumentHandle());
+        arangoDriver.graphCreateEdge("IPgraph", "isConnected",
+                con.getDocumentHandle(), con2.getDocumentHandle(), connectionEvent, true);
+
+
+        //BaseDocument
+
+        JsonElement res = EntityFactory.toJsonElement
+                (new ConnectionEvent("fds", "dad", 54, DateTime.now(),
+                        "das", DateTime.now(),"dasda", "dsa", "dasd","dasd","dadsa", 545), true);
+        System.out.println(res.isJsonObject());
+
+    }
+}

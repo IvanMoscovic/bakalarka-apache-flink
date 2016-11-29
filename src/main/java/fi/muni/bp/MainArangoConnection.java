@@ -1,33 +1,23 @@
 package fi.muni.bp;
 
+import com.arangodb.ArangoDriver;
+import fi.muni.bp.ArangoUtilities.BasicUtilities;
 import fi.muni.bp.Enums.CardinalityOptions;
 import fi.muni.bp.events.ConnectionEvent;
-import fi.muni.bp.functions.ElasticSearchSinkFunction;
-import fi.muni.bp.source.MonitoringEventSource;
+import fi.muni.bp.functions.ArangoSinkFunction;
 import fi.muni.bp.functions.TopNAggregation;
-import org.apache.flink.api.java.tuple.Tuple2;
+import fi.muni.bp.source.MonitoringEventSource;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.AscendingTimestampExtractor;
-import org.apache.flink.streaming.api.functions.sink.SinkFunction;
-import org.apache.flink.streaming.connectors.elasticsearch2.ElasticsearchSink;
-import org.elasticsearch.common.transport.InetSocketTransportAddress;
-import org.elasticsearch.common.transport.TransportAddress;
+
 import org.joda.time.DateTime;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 /**
- * @author Ivan Moscovic on 26.11.2016.
+ * @author Ivan Moscovic on 29.11.2016.
  */
-@SuppressWarnings("unchecked")
-public class MainWithOldSourceFunction {
+@SuppressWarnings("ALL")
+public class MainArangoConnection {
 
     private static final String PATH0 = "C:/Users/Peeve/Desktop/nf";
     private static final String PATH = "C:/Users/Peeve/Desktop/data.nfjson";
@@ -51,19 +41,12 @@ public class MainWithOldSourceFunction {
 
         TopNAggregation agg = new TopNAggregation(inputEventStream);
 
-        Map<String, String> config = new HashMap<>();
-        // This instructs the sink to emit after every element, otherwise they would be buffered
-        config.put("bulk.flush.max.actions", "1");
-        config.put("cluster.name", "elasticsearch");
-
-        List<InetSocketAddress> transports = new ArrayList<>();
-        transports.add(new InetSocketAddress(InetAddress.getByName("localhost"), 9300));
-
         agg.protocolCardinality(CardinalityOptions.SRC_PORT, 10)
-                .addSink(new ElasticsearchSink<>(config, transports, new ElasticSearchSinkFunction()));
+                .addSink(new ArangoSinkFunction("stats", "src_port"));
 
         agg.protocolCardinality(CardinalityOptions.SRC_PORT, 10).print();
 
         env.execute("CEP monitoring job");
     }
+
 }
