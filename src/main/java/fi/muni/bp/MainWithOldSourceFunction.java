@@ -59,6 +59,8 @@ public class MainWithOldSourceFunction {
         List<InetSocketAddress> transports = new ArrayList<>();
         transports.add(new InetSocketAddress(InetAddress.getByName("localhost"), 9300));
 
+
+
         agg.protocolCardinality(CardinalityOptions.SRC_PORT, 10)
                 .addSink(new ElasticsearchSink<>(config, transports, new ElasticSearchSinkFunction()));
 
