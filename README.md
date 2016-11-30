@@ -1,0 +1,1 @@
+Apache Flink CEP streaming big data project for bachelor thesis with use of ElasticSearch database and ArangoDB

@@ -1,7 +1,5 @@
 package fi.muni.bp;
 
-import com.arangodb.ArangoDriver;
-import fi.muni.bp.ArangoUtilities.BasicUtilities;
 import fi.muni.bp.Enums.CardinalityOptions;
 import fi.muni.bp.events.ConnectionEvent;
 import fi.muni.bp.functions.ArangoSinkFunction;
@@ -41,10 +39,10 @@ public class MainArangoConnection {
 
         TopNAggregation agg = new TopNAggregation(inputEventStream);
 
-        agg.protocolCardinality(CardinalityOptions.SRC_PORT, 10)
-                .addSink(new ArangoSinkFunction("stats", "src_port"));
+        agg.cardinality(CardinalityOptions.SRC_PORT, 10)
+                .addSink(new ArangoSinkFunction("stats", CardinalityOptions.SRC_PORT));
 
-        agg.protocolCardinality(CardinalityOptions.SRC_PORT, 10).print();
+        agg.cardinality(CardinalityOptions.SRC_PORT, 10).print();
 
         env.execute("CEP monitoring job");
     }
