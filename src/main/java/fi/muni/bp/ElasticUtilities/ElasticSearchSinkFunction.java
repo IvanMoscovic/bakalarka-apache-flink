@@ -1,4 +1,4 @@
-package fi.muni.bp.functions;
+package fi.muni.bp.ElasticUtilities;
 
 import org.apache.flink.api.common.functions.RuntimeContext;
 import org.apache.flink.api.java.tuple.Tuple2;
@@ -28,12 +28,12 @@ public class ElasticSearchSinkFunction implements ElasticsearchSinkFunction<Tupl
         // construct JSON document to index
         Map<String, String> json = new HashMap<>();
         json.put("windowTime", record.f0.toString());
-        json.put("src_port", record.f1);
+        json.put("protocol", record.f1);
         json.put("count", String.valueOf(record.f2));
 
         IndexRequest rqst = Requests.indexRequest()
                 .index("connection")           // index name
-                .type("ports")     // mapping name
+                .type("protocol")     // mapping name
                 .source(json);
 
         indexer.add(rqst);

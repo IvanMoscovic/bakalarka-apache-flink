@@ -1,4 +1,4 @@
-package fi.muni.bp.functions;
+package fi.muni.bp.ArangoUtilities;
 
 import com.arangodb.ArangoDriver;
 import com.arangodb.entity.BaseDocument;

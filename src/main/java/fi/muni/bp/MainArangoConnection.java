@@ -2,7 +2,7 @@ package fi.muni.bp;
 
 import fi.muni.bp.Enums.CardinalityOptions;
 import fi.muni.bp.events.ConnectionEvent;
-import fi.muni.bp.functions.ArangoSinkFunction;
+import fi.muni.bp.ArangoUtilities.ArangoSinkFunction;
 import fi.muni.bp.functions.TopNAggregation;
 import fi.muni.bp.source.MonitoringEventSource;
 import org.apache.flink.streaming.api.TimeCharacteristic;

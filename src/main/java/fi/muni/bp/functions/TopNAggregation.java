@@ -8,7 +8,10 @@ import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
+import org.apache.flink.streaming.api.windowing.assigners.TumblingProcessingTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.windowing.triggers.Trigger;
+import org.apache.flink.streaming.api.windowing.triggers.TriggerResult;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
 import org.joda.time.DateTime;
@@ -39,8 +42,10 @@ public class TopNAggregation {
      */
     public DataStream<List<Tuple2<String, Long>>> sumAggregateInTimeWin(String key, int timeWindowInSec, int topN){
 
-        return this.dataStream.keyBy(key).window(TumblingEventTimeWindows.of(Time.seconds(timeWindowInSec))).
-                apply(new WindowFunction<ConnectionEvent, List<Tuple2<String, Long>>, Tuple, TimeWindow>() {
+        return this.dataStream
+                .keyBy(key)
+                .window(TumblingEventTimeWindows.of(Time.seconds(timeWindowInSec)))
+                .apply(new WindowFunction<ConnectionEvent, List<Tuple2<String, Long>>, Tuple, TimeWindow>() {
 
                     private List<Tuple2<String, Long>> max = new LinkedList<>();
                     private String inWindow;
@@ -69,7 +74,7 @@ public class TopNAggregation {
                         if (max.size() >= topN){
                             if (sum > max.get(max.size() - 1).f1){
                                 max.remove(max.size() - 1);
-                                max.add(Tuple2.of(from + " in window "+ start + " ", sum));
+                                max.add(Tuple2.of(from + " in window "+ start + " " + end, sum));
                             }
                         }
                         else {
@@ -89,8 +94,9 @@ public class TopNAggregation {
      */
     public DataStream<Tuple3<Date, String, Long>> cardinality(CardinalityOptions cardOpt, int timeWindowInSec){
 
-        return this.dataStream.keyBy(cardOpt.toString()).window(TumblingEventTimeWindows.of(Time.seconds(timeWindowInSec))).
-                apply(new WindowFunction<ConnectionEvent, Tuple3<Date, String, Long>, Tuple, TimeWindow>() {
+        return this.dataStream.keyBy(cardOpt.toString())
+                .window(TumblingEventTimeWindows.of(Time.seconds(timeWindowInSec)))
+                .apply(new WindowFunction<ConnectionEvent, Tuple3<Date, String, Long>, Tuple, TimeWindow>() {
                     @Override
                     public void apply(Tuple tuple, TimeWindow timeWindow, Iterable<ConnectionEvent> iterable,
                                       Collector<Tuple3<Date, String, Long>> collector) throws Exception {
@@ -100,6 +106,7 @@ public class TopNAggregation {
                         for(ConnectionEvent event: iterable){
                             count++;
                         }
+
                         Object o = iterable.iterator().next();
                         Class<?> c = o.getClass();
                         Field f = c.getDeclaredField(cardOpt.toString());
@@ -117,6 +124,4 @@ public class TopNAggregation {
                 });
 
     }
-
-
 }
