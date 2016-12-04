@@ -20,17 +20,15 @@ import java.util.zip.GZIPInputStream;
 /**
  * @author Ivan Moscovic on 26.11.2016.
  */
-public class MonitoringEventSource<T> extends RichSourceFunction<T>{
+public class MonitoringEventSource<T> extends RichSourceFunction<T> {
 
     private volatile boolean isRunning = true;
     private ObjectMapper mapper = new ObjectMapper();
     private String filePath;
     private Class<T> type;
     private JavaType javaType;
-    private Integer expectedWindowLength;
 
-    public MonitoringEventSource(Class<T> type, String filePath/*,Integer expectedWindowLength*/) {
-        //this.expectedWindowLength = expectedWindowLength;
+    public MonitoringEventSource(Class<T> type, String filePath) {
         this.filePath = filePath;
         this.type = type;
     }
@@ -43,15 +41,6 @@ public class MonitoringEventSource<T> extends RichSourceFunction<T>{
             while (isRunning && iterator.hasNext()) {
                 T event = mapper.readValue(iterator.next(), javaType);
                 sourceContext.collect(event);
-                if (! iterator.hasNext()){
-                    try {
-                        ConnectionEvent connectionEvent = (ConnectionEvent) event;
-                        DateTime dateTime = connectionEvent.getTimestamp();
-                        //TODO create timeStamp so that it will close the window for aggregations (expectedWindowLength)
-                    } catch (ClassCastException e){
-                        e.printStackTrace();
-                    }
-                }
             }
         }
     }

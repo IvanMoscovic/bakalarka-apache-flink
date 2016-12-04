@@ -9,6 +9,7 @@ import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
+import org.joda.time.DateTime;
 
 /**
  * @author Ivan Moscovic on 1.12.2016.
@@ -29,14 +30,11 @@ public class MainSlidingWindow {
 
         DataStream<ConnectionEvent> inputEventStream = env
                 .addSource(new MonitoringEventSource(ConnectionEvent.class, PATH)).returns(ConnectionEvent.class)
-                .assignTimestampsAndWatermarks(new AscendingTimestampExtractor() {
+                .assignTimestampsAndWatermarks(new AscendingTimestampExtractor<ConnectionEvent>() {
                     @Override
-                    public long extractAscendingTimestamp(Object o) {
-                        ConnectionEvent connectionEvent;
-                        connectionEvent = (ConnectionEvent) o;
-                        return connectionEvent.getTimestamp().getMillis();
-                    }
-                });
+                    public long extractAscendingTimestamp(ConnectionEvent connection) {
+                        DateTime measurementTime = connection.getTimestamp();
+                        return measurementTime.getMillis();}});
 
         TopNSlidingWindow topNSlidingWindow = new TopNSlidingWindow(inputEventStream);
         //topNSlidingWindow.sumAggregateInTimeWin(TopNOptions.SRC_IP_ADDR, 2, 1, 10).print();
