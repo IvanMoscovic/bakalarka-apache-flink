@@ -8,13 +8,14 @@ import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.joda.time.DateTime;
 
 import java.util.Date;
 
 /**
  * @author Ivan Moscovic on 29.11.2016.
  */
-public class ArangoSinkFunction extends RichSinkFunction<Tuple3<Date, String, Long>> {
+public class ArangoSinkFunction extends RichSinkFunction<Tuple3<DateTime, String, Long>> {
 
     private ArangoDriver arangoDriver;
     private String collection;
@@ -32,7 +33,7 @@ public class ArangoSinkFunction extends RichSinkFunction<Tuple3<Date, String, Lo
     }
 
     @Override
-    public void invoke(Tuple3<Date, String, Long> tuple2) throws Exception {
+    public void invoke(Tuple3<DateTime, String, Long> tuple2) throws Exception {
         BaseDocument baseDocument = new BaseDocument();
         baseDocument.addAttribute("timeWindow", tuple2.f0);
         baseDocument.addAttribute(field, tuple2.f1);

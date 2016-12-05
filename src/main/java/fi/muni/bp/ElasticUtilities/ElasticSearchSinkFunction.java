@@ -8,6 +8,7 @@ import org.apache.flink.streaming.connectors.elasticsearch2.ElasticsearchSinkFun
 import org.apache.flink.streaming.connectors.elasticsearch2.RequestIndexer;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.Requests;
+import org.joda.time.DateTime;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -16,12 +17,12 @@ import java.util.Map;
 /**
  * @author Ivan Moscovic on 28.11.2016.
  */
-public class ElasticSearchSinkFunction implements ElasticsearchSinkFunction<Tuple3<Date, String, Long>> {
+public class ElasticSearchSinkFunction implements ElasticsearchSinkFunction<Tuple3<DateTime, String, Long>> {
 
     // construct index request
     @Override
     public void process(
-            Tuple3<Date, String, Long> record,
+            Tuple3<DateTime, String, Long> record,
             RuntimeContext ctx,
             RequestIndexer indexer) {
 

@@ -3,7 +3,7 @@ package fi.muni.bp;
 import fi.muni.bp.Enums.CardinalityOptions;
 import fi.muni.bp.Enums.TopNOptions;
 import fi.muni.bp.events.ConnectionEvent;
-import fi.muni.bp.functions.TopNSlidingWindow;
+import fi.muni.bp.functions.AggregationsSlidingWindow;
 import fi.muni.bp.source.MonitoringEventSource;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -36,9 +36,9 @@ public class MainSlidingWindow {
                         DateTime measurementTime = connection.getTimestamp();
                         return measurementTime.getMillis();}});
 
-        TopNSlidingWindow topNSlidingWindow = new TopNSlidingWindow(inputEventStream);
-        //topNSlidingWindow.sumAggregateInTimeWin(TopNOptions.SRC_IP_ADDR, 2, 1, 10).print();
-        topNSlidingWindow.cardinality(CardinalityOptions.PROTOCOL, 2, 1, 5).print();
+        AggregationsSlidingWindow topNSlidingWindow = new AggregationsSlidingWindow(inputEventStream);
+        topNSlidingWindow.sumAggregateInTimeWin(TopNOptions.SRC_IP_ADDR, 2, 1, 10).print();
+        //topNSlidingWindow.cardinality(CardinalityOptions.PROTOCOL, 2, 1, 5).print();
 
         env.execute("CEP monitoring job");
     }

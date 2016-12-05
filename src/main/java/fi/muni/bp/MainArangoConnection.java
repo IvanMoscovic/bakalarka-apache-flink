@@ -3,7 +3,7 @@ package fi.muni.bp;
 import fi.muni.bp.Enums.CardinalityOptions;
 import fi.muni.bp.events.ConnectionEvent;
 import fi.muni.bp.ArangoUtilities.ArangoSinkFunction;
-import fi.muni.bp.functions.TopNAggregation;
+import fi.muni.bp.functions.AggregationsTumblingWindow;
 import fi.muni.bp.source.MonitoringEventSource;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -37,12 +37,12 @@ public class MainArangoConnection {
                         DateTime measurementTime = connection.getTimestamp();
                         return measurementTime.getMillis();}});
 
-        TopNAggregation agg = new TopNAggregation(inputEventStream);
+        AggregationsTumblingWindow agg = new AggregationsTumblingWindow(inputEventStream);
 
-        agg.cardinality(CardinalityOptions.SRC_PORT, 10)
+        agg.cardinality(CardinalityOptions.SRC_PORT, 10, 100)
                 .addSink(new ArangoSinkFunction("stats", CardinalityOptions.SRC_PORT));
 
-        agg.cardinality(CardinalityOptions.SRC_PORT, 10).print();
+        agg.cardinality(CardinalityOptions.SRC_PORT, 10, 100).print();
 
         env.execute("CEP monitoring job");
     }

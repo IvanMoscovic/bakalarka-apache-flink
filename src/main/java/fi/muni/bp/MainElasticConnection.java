@@ -1,17 +1,17 @@
 package fi.muni.bp;
 
 import fi.muni.bp.Enums.CardinalityOptions;
+import fi.muni.bp.Enums.TopNOptions;
 import fi.muni.bp.events.ConnectionEvent;
 import fi.muni.bp.ElasticUtilities.ElasticSearchSinkFunction;
+import fi.muni.bp.functions.AggregationsTumblingWindow;
 import fi.muni.bp.source.MonitoringEventSource;
-import fi.muni.bp.functions.TopNAggregation;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.apache.flink.streaming.connectors.elasticsearch2.ElasticsearchSink;
 import org.joda.time.DateTime;
-
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -38,14 +38,14 @@ public class MainElasticConnection {
         env.setParallelism(1);
 
         DataStream<ConnectionEvent> inputEventStream = env
-                .addSource(new MonitoringEventSource(ConnectionEvent.class, PATH2)).returns(ConnectionEvent.class)
+                .addSource(new MonitoringEventSource(ConnectionEvent.class, PATH)).returns(ConnectionEvent.class)
                 .assignTimestampsAndWatermarks(new AscendingTimestampExtractor<ConnectionEvent>() {
                     @Override
                     public long extractAscendingTimestamp(ConnectionEvent connection) {
                         DateTime measurementTime = connection.getTimestamp();
                         return measurementTime.getMillis();}});
 
-        TopNAggregation agg = new TopNAggregation(inputEventStream);
+        AggregationsTumblingWindow agg = new AggregationsTumblingWindow(inputEventStream);
 
         Map<String, String> config = new HashMap<>();
         // This instructs the sink to emit after every element, otherwise they would be buffered
@@ -55,10 +55,10 @@ public class MainElasticConnection {
         List<InetSocketAddress> transports = new ArrayList<>();
         transports.add(new InetSocketAddress(InetAddress.getByName("localhost"), 9300));
 
-        agg.cardinality(CardinalityOptions.PROTOCOL, 10)
+        agg.cardinality(CardinalityOptions.PROTOCOL, 10, 100)
                 .addSink(new ElasticsearchSink<>(config, transports, new ElasticSearchSinkFunction()));
 
-        agg.sumAggregateInTimeWin("src_ip_addr", 10, 3).print();
+        agg.sumAggregateInTimeWin(TopNOptions.SRC_IP_ADDR, 1, 10).print();
 
         env.execute("CEP monitoring job");
     }
