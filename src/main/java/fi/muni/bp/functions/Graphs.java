@@ -15,6 +15,8 @@ import org.graphstream.graph.Graph;
 import org.graphstream.graph.IdAlreadyInUseException;
 import org.graphstream.graph.implementations.MultiGraph;
 import org.graphstream.graph.implementations.SingleGraph;
+import org.joda.time.DateTime;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.LinkedList;
@@ -39,18 +41,22 @@ public class Graphs implements Serializable {
                 .apply(new WindowFunction<ConnectionEvent, Graph, Tuple, TimeWindow>() {
 
                     private List<Tuple3<String, Long, List<String>>> max = new LinkedList<>();
-                    private String inWindow;
+                    private long end;
 
                     @Override
                     public void apply(Tuple tuple, TimeWindow timeWindow, Iterable<ConnectionEvent> iterable,
                                       Collector<Graph> collector) throws Exception {
 
+                        DateTime startDateTime = new DateTime(timeWindow.getStart());
+                        long start = startDateTime.getMillis();
                         List<String> listOfEdges = new LinkedList<>();
-                        String start = new Date(timeWindow.getStart()).toString();
 
-                        if (start.equals(inWindow)){
 
-                            Graph graph = new MultiGraph(start);
+                        if (start == end){
+                            String hour = String.valueOf(startDateTime.getHourOfDay());
+                            String min = String.valueOf(startDateTime.getMinuteOfHour());
+                            String sec = String.valueOf(startDateTime.getSecondOfMinute());
+                            Graph graph = new MultiGraph(hour+'-'+min+'-'+sec);
                             int count = 0;
                             for(Tuple3<String, Long, List<String>> elem : max) {
                                 try {
@@ -75,11 +81,9 @@ public class Graphs implements Serializable {
                             max.clear();
                         }
 
-                        String end = new Date(timeWindow.getEnd()).toString();
-                        inWindow = end;
+                        end = new DateTime(timeWindow.getEnd()).getMillis();
 
                         String from = iterable.iterator().next().getSrc_ip_addr();
-                        String date = iterable.iterator().next().getTimestamp().toString();
                         Long sum = 0L;
                         for (ConnectionEvent t: iterable) {
                             sum += t.getBytes();

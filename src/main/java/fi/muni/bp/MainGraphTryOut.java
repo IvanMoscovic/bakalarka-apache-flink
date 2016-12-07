@@ -29,7 +29,7 @@ public class MainGraphTryOut {
         env.setParallelism(1);
 
         DataStream<ConnectionEvent> inputEventStream = env
-                .addSource(new MonitoringEventSource(ConnectionEvent.class, PATH2)).returns(ConnectionEvent.class)
+                .addSource(new MonitoringEventSource(ConnectionEvent.class, PATH)).returns(ConnectionEvent.class)
                 .assignTimestampsAndWatermarks(new AscendingTimestampExtractor<ConnectionEvent>() {
                     @Override
                     public long extractAscendingTimestamp(ConnectionEvent connection) {
@@ -37,9 +37,13 @@ public class MainGraphTryOut {
                         return measurementTime.getMillis();}});
 
         Graphs agg = new Graphs(inputEventStream);
-        //agg.generateGraphs("src_ip_addr", 1, 1000).addSink((SinkFunction<Graph>) nodes -> nodes.display());
-
-        agg.generateGraphs("src_ip_addr", 1, 1000).addSink(new ArangoGraph());
+        /*agg.generateGraphs("src_ip_addr", 1, 100).addSink(new SinkFunction<Graph>() {
+            @Override
+            public void invoke(Graph graph) throws Exception {
+                System.out.println(graph.getId());
+            }
+        });*/
+        agg.generateGraphs("src_ip_addr", 1, 100).addSink(new ArangoGraph());
 
         env.execute("CEP monitoring job");
     }

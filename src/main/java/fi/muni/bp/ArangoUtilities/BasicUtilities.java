@@ -78,43 +78,5 @@ public class BasicUtilities {
                 System.out.println("delete collection failed. " + e.getMessage());
             }
         }
-
-    /**
-     * creates Graph with edgeDefinition collection called isConnected with skipIndex on timeStamp field
-     * and vertexCollection called IPaddr
-     * @param ipVertex - name for ip vertex collection db
-     * @param edge - name for edge collection db
-     * @param graphName - name for graph in db
-     */
-    public void createGraphWithCollections(String ipVertex, String edge, String graphName){
-
-        try {
-            arangoDriver.createGraph(graphName, true);
-        } catch (ArangoException e) {
-            System.out.println("couldnt create graph");
-        }
-
-        try {
-            arangoDriver.graphCreateVertexCollection(graphName, ipVertex);
-        } catch (ArangoException e){
-            System.out.println("couldnt create vertex collection");
-        }
-
-        try {
-            EdgeDefinitionEntity edgeDefIsConnected = new EdgeDefinitionEntity();
-            edgeDefIsConnected.setCollection(edge);
-            edgeDefIsConnected.setFrom(Arrays.asList(ipVertex));
-            edgeDefIsConnected.setTo(Arrays.asList(ipVertex));
-            arangoDriver.graphCreateEdgeDefinition(graphName, edgeDefIsConnected);
-        } catch (ArangoException e){
-            System.out.println("couldnt create edge def");
-        }
-
-        try {
-            arangoDriver.createSkipListIndex(edge, true,"timestamp");
-        } catch (ArangoException e) {
-            e.printStackTrace();
-        }
-    }
 }
 

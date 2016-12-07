@@ -21,8 +21,9 @@ public class ArangoGraph extends RichSinkFunction<Graph> implements Serializable
 
     private ArangoDriver arangoDriver;
 
+    //constuctor for testing purposes
     /*public ArangoGraph() {
-        /*ArangoConfigure configure = new ArangoConfigure();
+        ArangoConfigure configure = new ArangoConfigure();
         configure.setUser("root");
         configure.setPassword("root");
         configure.init();
@@ -83,15 +84,21 @@ public class ArangoGraph extends RichSinkFunction<Graph> implements Serializable
                     e.printStackTrace();
                 }
                 if (count == 125) {
-                    System.out.println("som tu");
                     arangoDriver.executeBatch();
                     arangoDriver.startBatchMode();
                     count = 0;
                 }
             }
+        }
+        //commit rest, if there is any
+        try {
             arangoDriver.executeBatch();
             arangoDriver.startBatchMode();
+        } catch (ArangoException e){
+            //fine
         }
+        //close the batch, so it can be started again with second graf over the same driver instance
+        arangoDriver.cancelBatchMode();
     }
 
 
