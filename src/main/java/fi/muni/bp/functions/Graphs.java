@@ -13,6 +13,7 @@ import org.apache.flink.util.Collector;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.IdAlreadyInUseException;
+import org.graphstream.graph.implementations.MultiGraph;
 import org.graphstream.graph.implementations.SingleGraph;
 import java.io.Serializable;
 import java.util.Date;
@@ -31,7 +32,7 @@ public class Graphs implements Serializable {
         this.dataStream = dataStream;
     }
 
-    public DataStream<Graph> createGraphs(String key, int timeWindowInSec, int topN){
+    public DataStream<Graph> generateGraphs(String key, int timeWindowInSec, int topN){
 
         return this.dataStream.keyBy(key).window(TumblingEventTimeWindows.of(Time.seconds(timeWindowInSec))).
                 apply(new WindowFunction<ConnectionEvent, Graph, Tuple, TimeWindow>() {
@@ -49,10 +50,14 @@ public class Graphs implements Serializable {
 
                         if (start.equals(inWindow)){
 
-                            Graph graph = new SingleGraph(start);
+                            Graph graph = new MultiGraph(start);
                             int count = 0;
                             for(Tuple3<String, Long, List<String>> elem : max) {
-                                graph.addNode(elem.f0);
+                                try {
+                                    graph.addNode(elem.f0);
+                                }catch (IdAlreadyInUseException e){
+                                    //It's fine, node just already exists
+                                }
                                 for (String to : elem.f2) {
                                     try {
                                         graph.addNode(to);
@@ -83,11 +88,11 @@ public class Graphs implements Serializable {
                         if (max.size() >= topN){
                             if (sum > max.get(max.size() - 1).f1){
                                 max.remove(max.size() - 1);
-                                max.add(Tuple3.of(from + " in window "+ start + " ", sum, listOfEdges));
+                                max.add(Tuple3.of(from, sum, listOfEdges));
                             }
                         }
                         else {
-                            max.add(Tuple3.of(from + " in window "+ start + " " + end , sum, listOfEdges));
+                            max.add(Tuple3.of(from, sum, listOfEdges));
                         }
                         max.sort((Tuple3<String, Long, List<String>> o1, Tuple3<String, Long, List<String>> o2)
                                 -> o2.f1.compareTo(o1.f1));

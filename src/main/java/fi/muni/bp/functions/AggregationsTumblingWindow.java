@@ -32,7 +32,7 @@ public class AggregationsTumblingWindow {
     }
 
     /**
-     * Calculates topN IPaddr which transferred the most Bytes in time window
+     * Calculates topN IPaddr which transferred the most Bytes globally, updated after end of each window
      * @param key - src_ip or dst_ip
      * @param timeWindowInSec - window in seconds
      * @param topN - how many topN

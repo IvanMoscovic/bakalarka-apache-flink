@@ -31,7 +31,7 @@ public class AggregationsSlidingWindow {
     }
 
     /**
-     * calculate topN
+     * calculate topN in window
      * @param key src/dst ip address
      * @param timeWindowInSec - length of SlidingEventTimeWindows
      * @param slide - slide of the window

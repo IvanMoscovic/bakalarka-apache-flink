@@ -1,14 +1,15 @@
 package fi.muni.bp;
 
 
+import fi.muni.bp.ArangoUtilities.ArangoGraph;
 import fi.muni.bp.events.ConnectionEvent;
 import fi.muni.bp.functions.Graphs;
 import fi.muni.bp.source.MonitoringEventSource;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.AscendingTimestampExtractor;
 import org.apache.flink.streaming.api.functions.sink.SinkFunction;
+import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
 import org.graphstream.graph.Graph;
 import org.joda.time.DateTime;
 
@@ -28,7 +29,7 @@ public class MainGraphTryOut {
         env.setParallelism(1);
 
         DataStream<ConnectionEvent> inputEventStream = env
-                .addSource(new MonitoringEventSource(ConnectionEvent.class, PATH)).returns(ConnectionEvent.class)
+                .addSource(new MonitoringEventSource(ConnectionEvent.class, PATH2)).returns(ConnectionEvent.class)
                 .assignTimestampsAndWatermarks(new AscendingTimestampExtractor<ConnectionEvent>() {
                     @Override
                     public long extractAscendingTimestamp(ConnectionEvent connection) {
@@ -36,7 +37,9 @@ public class MainGraphTryOut {
                         return measurementTime.getMillis();}});
 
         Graphs agg = new Graphs(inputEventStream);
-        agg.createGraphs("src_ip_addr", 1, 1000).addSink((SinkFunction<Graph>) nodes -> nodes.display());
+        //agg.generateGraphs("src_ip_addr", 1, 1000).addSink((SinkFunction<Graph>) nodes -> nodes.display());
+
+        agg.generateGraphs("src_ip_addr", 1, 1000).addSink(new ArangoGraph());
 
         env.execute("CEP monitoring job");
     }
