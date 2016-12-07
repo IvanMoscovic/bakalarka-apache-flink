@@ -34,8 +34,9 @@ public class Graphs implements Serializable {
 
     public DataStream<Graph> generateGraphs(String key, int timeWindowInSec, int topN){
 
-        return this.dataStream.keyBy(key).window(TumblingEventTimeWindows.of(Time.seconds(timeWindowInSec))).
-                apply(new WindowFunction<ConnectionEvent, Graph, Tuple, TimeWindow>() {
+        return this.dataStream
+                .keyBy(key).window(TumblingEventTimeWindows.of(Time.seconds(timeWindowInSec)))
+                .apply(new WindowFunction<ConnectionEvent, Graph, Tuple, TimeWindow>() {
 
                     private List<Tuple3<String, Long, List<String>>> max = new LinkedList<>();
                     private String inWindow;
@@ -44,8 +45,7 @@ public class Graphs implements Serializable {
                     public void apply(Tuple tuple, TimeWindow timeWindow, Iterable<ConnectionEvent> iterable,
                                       Collector<Graph> collector) throws Exception {
 
-                        List<String> listOfEdges = new LinkedList<String>();
-
+                        List<String> listOfEdges = new LinkedList<>();
                         String start = new Date(timeWindow.getStart()).toString();
 
                         if (start.equals(inWindow)){

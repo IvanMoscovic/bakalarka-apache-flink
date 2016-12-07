@@ -1,95 +1,101 @@
 package fi.muni.bp.ArangoUtilities;
 
+import com.arangodb.ArangoConfigure;
 import com.arangodb.ArangoDriver;
 import com.arangodb.ArangoException;
-import com.arangodb.entity.BaseDocument;
-import com.arangodb.entity.DocumentEntity;
-import com.arangodb.entity.EdgeDefinitionEntity;
-import fi.muni.bp.events.ConnectionEvent;
+import com.arangodb.entity.*;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
-import org.joda.time.DateTime;
 
-import java.util.Arrays;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Ivan Moscovic on 6.12.2016.
  */
-public class ArangoGraph extends RichSinkFunction<Graph> {
+public class ArangoGraph extends RichSinkFunction<Graph> implements Serializable {
 
     private ArangoDriver arangoDriver;
-    private BasicUtilities basicUtilities;
 
-    public ArangoGraph() {
-        arangoDriver = new ArangoDriver(BasicUtilities.setConfiguration("root", "root"));
-        basicUtilities = new BasicUtilities(arangoDriver);
-    }
+    /*public ArangoGraph() {
+        /*ArangoConfigure configure = new ArangoConfigure();
+        configure.setUser("root");
+        configure.setPassword("root");
+        configure.init();
+        this.arangoDriver = new ArangoDriver(configure);
+    }*/
 
-    public void open(Configuration configuration) {
-        arangoDriver = new ArangoDriver(BasicUtilities.setConfiguration("root", "root"));
-        basicUtilities = new BasicUtilities(arangoDriver);
+    @Override
+    public void open(Configuration configuration){
+        ArangoConfigure configure = new ArangoConfigure();
+        configure.setUser("root");
+        configure.setPassword("root");
+        configure.init();
+        this.arangoDriver = new ArangoDriver(configure);
     }
 
     @Override
     public void invoke(Graph graph) throws ArangoException {
 
-        String vertexCollection = "IPaddr";
-        String edgeCollection = "isConnected";
+        String vertexCollection = "IPaddr_" + graph.getId();
+        String edgeCollection = "isConnected_" + graph.getId();
+        String graphName = "IPGraph_" + graph.getId();
         int count = 0;
 
-        //Fake object as attribute
-        ConnectionEvent connectionEvent = new ConnectionEvent("fds", "dad", 54, DateTime.now(),
-                "das", DateTime.now(),"dasda", "dsa", "dasd","dasd","dadsa", 545);
+        arangoDriver.createCollection(edgeCollection, new CollectionOptions().setType(CollectionType.EDGE));
+        arangoDriver.createCollection(vertexCollection, new CollectionOptions().setType(CollectionType.DOCUMENT));
+        EdgeDefinitionEntity edgeDef = new EdgeDefinitionEntity();
+        edgeDef.setCollection(edgeCollection);
+        edgeDef.getFrom().add(vertexCollection);
+        edgeDef.getTo().add(vertexCollection);
+        List<EdgeDefinitionEntity> edgeDefinitions = new ArrayList<>();
+        edgeDefinitions.add(edgeDef);
+        arangoDriver.createGraph(graphName, edgeDefinitions, null, false);
+        arangoDriver.startBatchMode();
 
-        arangoDriver.createGraph(graph.getId(), true);
-        arangoDriver.graphCreateVertexCollection(graph.getId(), vertexCollection);
-        EdgeDefinitionEntity edgeDefIsConnected = new EdgeDefinitionEntity();
-        edgeDefIsConnected.setCollection(edgeCollection);
-        edgeDefIsConnected.setFrom(Arrays.asList(vertexCollection));
-        edgeDefIsConnected.setTo(Arrays.asList(vertexCollection));
-        arangoDriver.graphCreateEdgeDefinition(graph.getId(), edgeDefIsConnected);
-        //arangoDriver.startBatchMode();
-
-        DocumentEntity<BaseDocument> src = null;
-        DocumentEntity<BaseDocument> target = null;
+        BaseDocument src = new BaseDocument();
+        BaseDocument target = new BaseDocument();
         for(Node from: graph.getEachNode()){
             try {
-                BaseDocument baseDocument = new BaseDocument();
-                baseDocument.setDocumentKey(from.getId());
-                src = arangoDriver.graphCreateVertex(graph.getId(), vertexCollection, baseDocument, true);
+                src.setDocumentKey(from.getId());
+                arangoDriver.graphCreateVertex(graphName, vertexCollection, src, false);
             } catch (ArangoException e) {
-                src = arangoDriver.getDocument(vertexCollection, from.getId(), BaseDocument.class);
+                //fine
             }
-            for(Edge edge : from.getEachLeavingEdge()){
+            for(Edge edge : from.getEachLeavingEdge()) {
                 count++;
                 try {
-                    BaseDocument baseDocument1 = new BaseDocument();
-                    baseDocument1.setDocumentKey(edge.getTargetNode().getId());
-                    target = arangoDriver.graphCreateVertex(graph.getId(),
-                            vertexCollection, baseDocument1, true);
+                    target.setDocumentKey(edge.getTargetNode().getId());
+                    arangoDriver.graphCreateVertex(graphName, vertexCollection, target, false);
                 } catch (ArangoException e) {
-                    target = arangoDriver.getDocument(vertexCollection, edge.getTargetNode().getId(), BaseDocument.class);
+                    //fine
                 }
 
                 try {
-
-                    arangoDriver.graphCreateEdge(graph.getId(), edgeCollection,
-                            src.getDocumentHandle(), target.getDocumentHandle(), connectionEvent, true);
+                    arangoDriver.graphCreateEdge(graphName, edgeCollection,
+                             vertexCollection+"/"+src.getDocumentKey(),
+                             vertexCollection+"/"+target.getDocumentKey(), null, false);
                 } catch (ArangoException e) {
                     e.printStackTrace();
                 }
-                /*if (count == 125){
+                if (count == 125) {
                     System.out.println("som tu");
                     arangoDriver.executeBatch();
                     arangoDriver.startBatchMode();
                     count = 0;
-                }*/
+                }
             }
+            arangoDriver.executeBatch();
+            arangoDriver.startBatchMode();
         }
-        //arangoDriver.executeBatch();
     }
 
+
+
+
 }
+
