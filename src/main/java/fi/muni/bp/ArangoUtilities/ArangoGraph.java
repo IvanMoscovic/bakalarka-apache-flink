@@ -4,6 +4,7 @@ import com.arangodb.ArangoConfigure;
 import com.arangodb.ArangoDriver;
 import com.arangodb.ArangoException;
 import com.arangodb.entity.*;
+import fi.muni.bp.events.ConnectionEvent;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.graphstream.graph.Edge;
@@ -77,9 +78,15 @@ public class ArangoGraph extends RichSinkFunction<Graph> implements Serializable
                 }
 
                 try {
+                    ConnectionEvent connectionEvent = new ConnectionEvent();
+                    connectionEvent.setBytes(edge.getAttribute("bytes"));
+                    connectionEvent.setTimestamp(edge.getAttribute("timeStamp"));
+                    connectionEvent.setProtocol(edge.getAttribute("protocol"));
+                    connectionEvent.setSrc_port(edge.getAttribute("src_port"));
+                    connectionEvent.setDst_port(edge.getAttribute("dst_port"));
                     arangoDriver.graphCreateEdge(graphName, edgeCollection,
                              vertexCollection+"/"+src.getDocumentKey(),
-                             vertexCollection+"/"+target.getDocumentKey(), null, false);
+                             vertexCollection+"/"+target.getDocumentKey(), connectionEvent, false);
                 } catch (ArangoException e) {
                     e.printStackTrace();
                 }

@@ -40,7 +40,7 @@ public class Graphs implements Serializable {
                 .keyBy(key).window(TumblingEventTimeWindows.of(Time.seconds(timeWindowInSec)))
                 .apply(new WindowFunction<ConnectionEvent, Graph, Tuple, TimeWindow>() {
 
-                    private List<Tuple3<String, Long, List<String>>> max = new LinkedList<>();
+                    private List<Tuple3<String, Long, List<ConnectionEvent>>> max = new LinkedList<>();
                     private long end;
 
                     @Override
@@ -49,7 +49,7 @@ public class Graphs implements Serializable {
 
                         DateTime startDateTime = new DateTime(timeWindow.getStart());
                         long start = startDateTime.getMillis();
-                        List<String> listOfEdges = new LinkedList<>();
+                        List<ConnectionEvent> listOfEdges = new LinkedList<>();
 
 
                         if (start == end){
@@ -58,20 +58,25 @@ public class Graphs implements Serializable {
                             String sec = String.valueOf(startDateTime.getSecondOfMinute());
                             Graph graph = new MultiGraph(hour+'-'+min+'-'+sec);
                             int count = 0;
-                            for(Tuple3<String, Long, List<String>> elem : max) {
+                            for(Tuple3<String, Long, List<ConnectionEvent>> elem : max) {
                                 try {
                                     graph.addNode(elem.f0);
                                 }catch (IdAlreadyInUseException e){
                                     //It's fine, node just already exists
                                 }
-                                for (String to : elem.f2) {
+                                for (ConnectionEvent to : elem.f2) {
                                     try {
-                                        graph.addNode(to);
+                                        graph.addNode(to.getDst_ip_addr());
                                     } catch (IdAlreadyInUseException e) {
                                         //It's fine, node just already exists
                                     }
                                     try {
-                                        graph.addEdge(String.valueOf(count), elem.f0, to, true);
+                                        Edge edge = graph.addEdge(String.valueOf(count), elem.f0, to.getDst_ip_addr(), true);
+                                        edge.addAttribute("bytes",to.getBytes());
+                                        edge.addAttribute("src_port", to.getSrc_port());
+                                        edge.addAttribute("dst_port", to.getDst_port());
+                                        edge.addAttribute("protocol", to.getProtocol());
+                                        edge.addAttribute("timeStamp", to.getTimestamp());
                                         count++;
                                     } catch (Exception e) {
                                     }
@@ -87,7 +92,7 @@ public class Graphs implements Serializable {
                         Long sum = 0L;
                         for (ConnectionEvent t: iterable) {
                             sum += t.getBytes();
-                            listOfEdges.add(t.getDst_ip_addr());
+                            listOfEdges.add(t);
                         }
                         if (max.size() >= topN){
                             if (sum > max.get(max.size() - 1).f1){
@@ -98,7 +103,7 @@ public class Graphs implements Serializable {
                         else {
                             max.add(Tuple3.of(from, sum, listOfEdges));
                         }
-                        max.sort((Tuple3<String, Long, List<String>> o1, Tuple3<String, Long, List<String>> o2)
+                        max.sort((Tuple3<String, Long, List<ConnectionEvent>> o1, Tuple3<String, Long, List<ConnectionEvent>> o2)
                                 -> o2.f1.compareTo(o1.f1));
                     }
                 });
