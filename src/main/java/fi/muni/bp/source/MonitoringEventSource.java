@@ -1,5 +1,6 @@
 package fi.muni.bp.source;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
@@ -50,6 +51,7 @@ public class MonitoringEventSource<T> extends RichSourceFunction<T> {
         super.open(parameters);
         this.javaType = mapper.getTypeFactory().constructType(type);
         mapper.registerModule(new JodaModule());
+        mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
     }
 
     @Override

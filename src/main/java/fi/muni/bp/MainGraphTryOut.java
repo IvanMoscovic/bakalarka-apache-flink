@@ -1,7 +1,7 @@
 package fi.muni.bp;
 
 
-import fi.muni.bp.ArangoUtilities.ArangoGraph;
+import fi.muni.bp.ArangoUtilities.GraphStreamToArangoGraphConverter;
 import fi.muni.bp.events.ConnectionEvent;
 import fi.muni.bp.functions.Graphs;
 import fi.muni.bp.source.MonitoringEventSource;
@@ -13,7 +13,8 @@ import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExt
 import org.graphstream.graph.Graph;
 import org.joda.time.DateTime;
 
-@SuppressWarnings({"unchecked", "Duplicates"})
+
+@SuppressWarnings("unchecked")
 public class MainGraphTryOut {
 
     private static final String PATH0 = "C:/Users/Peeve/Desktop/nf";
@@ -43,7 +44,7 @@ public class MainGraphTryOut {
                 System.out.println(graph.getId());
             }
         });*/
-        agg.generateGraphs("src_ip_addr", 1, 100).addSink(new ArangoGraph());
+        agg.generateGraphs("src_ip_addr", 1, 100).addSink(new GraphStreamToArangoGraphConverter());
 
         env.execute("CEP monitoring job");
     }

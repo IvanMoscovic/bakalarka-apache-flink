@@ -10,15 +10,13 @@ import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
-
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Ivan Moscovic on 6.12.2016.
  */
-public class ArangoGraph extends RichSinkFunction<Graph> implements Serializable {
+public class GraphStreamToArangoGraphConverter extends RichSinkFunction<Graph> {
 
     private ArangoDriver arangoDriver;
 
@@ -43,11 +41,13 @@ public class ArangoGraph extends RichSinkFunction<Graph> implements Serializable
     @Override
     public void invoke(Graph graph) throws ArangoException {
 
+        //creating names for graph and collections from Graph id instance
         String vertexCollection = "IPaddr_" + graph.getId();
         String edgeCollection = "isConnected_" + graph.getId();
         String graphName = "IPGraph_" + graph.getId();
         int count = 0;
 
+        //creating vertex collection for IPaddr and edge collection, registering edgeDefinition and creating graph
         arangoDriver.createCollection(edgeCollection, new CollectionOptions().setType(CollectionType.EDGE));
         arangoDriver.createCollection(vertexCollection, new CollectionOptions().setType(CollectionType.DOCUMENT));
         EdgeDefinitionEntity edgeDef = new EdgeDefinitionEntity();
@@ -57,10 +57,13 @@ public class ArangoGraph extends RichSinkFunction<Graph> implements Serializable
         List<EdgeDefinitionEntity> edgeDefinitions = new ArrayList<>();
         edgeDefinitions.add(edgeDef);
         arangoDriver.createGraph(graphName, edgeDefinitions, null, false);
+
+        //starting of batch process
         arangoDriver.startBatchMode();
 
         BaseDocument src = new BaseDocument();
         BaseDocument target = new BaseDocument();
+
         for(Node from: graph.getEachNode()){
             try {
                 src.setDocumentKey(from.getId());
@@ -102,10 +105,11 @@ public class ArangoGraph extends RichSinkFunction<Graph> implements Serializable
             arangoDriver.executeBatch();
             arangoDriver.startBatchMode();
         } catch (ArangoException e){
-            //fine
+            //fine, fails ony if there was nothing to commit (we want to recover from that)
         }
-        //close the batch, so it can be started again with second graf over the same driver instance
+        //close the batch, so it can be started again with second graph over the same driver instance
         arangoDriver.cancelBatchMode();
+        System.out.println("Graph " + graphName + " created in Arango");
     }
 
 

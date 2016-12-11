@@ -63,7 +63,7 @@ public class AggregationsSlidingWindow {
                             }
                             collector.collect(max);
                             max.clear();
-                            streamSummary = new StreamSummary<String>(1000);
+                            //streamSummary = new StreamSummary<>(1000);
                         }
 
                         end = dateTime.plusSeconds(slide).getMillis();
