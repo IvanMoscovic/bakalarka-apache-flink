@@ -50,6 +50,7 @@ public class GraphStreamToArangoGraphConverter extends RichSinkFunction<Graph> {
         //creating vertex collection for IPaddr and edge collection, registering edgeDefinition and creating graph
         arangoDriver.createCollection(edgeCollection, new CollectionOptions().setType(CollectionType.EDGE));
         arangoDriver.createCollection(vertexCollection, new CollectionOptions().setType(CollectionType.DOCUMENT));
+        arangoDriver.createSkipListIndex(vertexCollection, false, "timestamp");
         EdgeDefinitionEntity edgeDef = new EdgeDefinitionEntity();
         edgeDef.setCollection(edgeCollection);
         edgeDef.getFrom().add(vertexCollection);
