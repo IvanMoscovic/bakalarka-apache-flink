@@ -5,6 +5,7 @@ import fi.muni.bp.events.EmailJoinEvent;
 import fi.muni.bp.events.EmailToEvent;
 import fi.muni.bp.functions.TimestampExtractor;
 import fi.muni.bp.source.MonitoringEventSource;
+import org.apache.flink.api.common.functions.FilterFunction;
 import org.apache.flink.api.common.functions.JoinFunction;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.java.functions.KeySelector;
@@ -13,21 +14,20 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.assigners.SlidingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.java.StreamTableEnvironment;
-import org.apache.flink.table.functions.TableFunction;
 
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
- * filter uses table/sql api, not working so far
+ * filter with base api
  * @author Ivan Moscovic  on 10.12.2016.
  */
-@SuppressWarnings({"unchecked", "Duplicates"})
-public class Emails {
+
+@SuppressWarnings("ALL")
+public class Emails2 {
 
     private static final String PATH0 = "C:/Users/Peeve/Desktop/nf";
     private static final String PATH = "C:/Users/Peeve/Desktop/data.nfjson";
@@ -62,17 +62,28 @@ public class Emails {
                             public EmailJoinEvent join(EmailFromEvent emailFromEvent, EmailToEvent emailToEvent) throws Exception {
                                 return createEmailJoinObject(emailFromEvent, emailToEvent);
                             }
+                        })
+                        .filter(new FilterFunction<EmailJoinEvent>() {
+                            List<String> controls = new LinkedList<String>(Arrays.asList("gmail.com", "post.sk"));
+                            @Override
+                            public boolean filter(EmailJoinEvent emailJoinEvent) throws Exception {
+                                if (!controls.contains(emailJoinEvent.getFrom_domain())){
+                                    return false;
+                                }
+                                for(String domain : emailJoinEvent.getTo_domains()){
+                                    if (!controls.contains(domain)){
+                                        return true;
+                                    }
+                                }
+                                return false;
+                            }
                         });
 
-        //connectedStreams.print();
+        connectedStreams
+                .map((MapFunction<EmailJoinEvent, String>) emailJoinEvent -> emailJoinEvent.getFrom_domain())
+                .print();
 
-        Table inputTable = tableEnv.fromDataStream(connectedStreams);
-        tableEnv.registerFunction("myFilter", new MyFilter());
-        String predicate = sqlGenerator("gmail.com", "mail.ru");
-        Table resultTable = inputTable.filter(predicate);
 
-        DataStream<EmailJoinEvent> joinEventDataStream = tableEnv.toDataStream(resultTable, EmailJoinEvent.class);
-        joinEventDataStream.map((MapFunction<EmailJoinEvent, String>) emailJoinEvent -> emailJoinEvent.getStrTo_domains()).print();
 
         env.execute("CEP monitoring job");
     }
@@ -92,34 +103,5 @@ public class Emails {
         joinEvent.setStrTo_domains(toEvent.getTo_domains().toString());
         joinEvent.setToTimestamp(toEvent.getTimestamp());
         return joinEvent;
-    }
-
-    private static String sqlGenerator(String... domains){
-        String sql = "";
-        int i = 0;
-        for (String domain : domains){
-            i += 1;
-            if (i == domains.length){
-                sql += "from_domain = '" + domain + "\'";
-                return sql;
-            }
-            sql += "from_domain = '" + domain + "' || ";
-        }
-        return null;
-    }
-
-    public static class MyFilter extends TableFunction<Boolean> {
-        public void eval(String domains) {
-            String s = domains.substring(1, domains.length()-1);
-            List<String> domainsList = new LinkedList<String>(Arrays.asList(s.split(",")));
-            List<String> control = Arrays.asList("gmail.com", "mail.ru");
-            for(String domain : domainsList) {
-                if (!control.contains(domain)){
-                    collect(true);
-                    return;
-                }
-            }
-            collect(false);
-        }
     }
 }

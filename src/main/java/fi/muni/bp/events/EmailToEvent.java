@@ -14,7 +14,6 @@ public class EmailToEvent {
 
     private String entity;
     private String qid;
-    private int dsn_2;
     private String relay_hostname;
     private List<String> to;
     private DateTime timestamp;
@@ -27,6 +26,7 @@ public class EmailToEvent {
     private String sendmail_uid;
     private int pri;
     private int dsn_1;
+    private int dsn_2;
     private int dsn_3;
     private int relay_port;
     private String hostname;
