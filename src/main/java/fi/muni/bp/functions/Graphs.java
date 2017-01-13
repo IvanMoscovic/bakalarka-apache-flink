@@ -40,6 +40,7 @@ public class Graphs implements Serializable {
                 .keyBy(key).window(TumblingEventTimeWindows.of(Time.seconds(timeWindowInSec)))
                 .apply(new WindowFunction<ConnectionEvent, Graph, Tuple, TimeWindow>() {
 
+                    //Tuple3<srcIPaddr, bytes, dstIPaddrs>
                     private List<Tuple3<String, Long, List<ConnectionEvent>>> max = new LinkedList<>();
                     private long end;
 

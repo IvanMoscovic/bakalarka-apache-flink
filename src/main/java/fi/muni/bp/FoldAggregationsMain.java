@@ -1,29 +1,34 @@
 package fi.muni.bp;
 
-import fi.muni.bp.Enums.CardinalityOptions;
+import com.clearspring.analytics.stream.Counter;
+import com.clearspring.analytics.stream.StreamSummary;
 import fi.muni.bp.Enums.TopNOptions;
 import fi.muni.bp.events.ConnectionEvent;
-import fi.muni.bp.ElasticUtilities.ElasticSearchSinkFunction;
 import fi.muni.bp.functions.AggregationsTumblingWindow;
+import fi.muni.bp.functions.FoldAggregation;
 import fi.muni.bp.source.MonitoringEventSource;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.timestamps.AscendingTimestampExtractor;
-import org.apache.flink.streaming.connectors.elasticsearch2.ElasticsearchSink;
+import org.apache.flink.streaming.api.functions.AscendingTimestampExtractor;
+import org.apache.flink.table.api.Table;
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.java.StreamTableEnvironment;
+import org.apache.flink.util.Collector;
 import org.joda.time.DateTime;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.HashMap;
+
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 /**
- * @author Ivan Moscovic on 26.11.2016.
+ * Created by Peeve on 11.1.2017.
  */
-@SuppressWarnings("unchecked")
-public class MainElasticConnection {
+@SuppressWarnings("ALL")
+public class FoldAggregationsMain {
 
     private static final String PATH0 = "C:/Users/Peeve/Desktop/nf";
     private static final String PATH = "C:/Users/Peeve/Desktop/data.nfjson";
@@ -43,24 +48,14 @@ public class MainElasticConnection {
                     @Override
                     public long extractAscendingTimestamp(ConnectionEvent connection) {
                         DateTime measurementTime = connection.getTimestamp();
-                        return measurementTime.getMillis();}});
+                        return measurementTime.getMillis();
+                    }
+                });
 
-        AggregationsTumblingWindow agg = new AggregationsTumblingWindow(inputEventStream);
+        FoldAggregation foldAggregation = new FoldAggregation(inputEventStream);
+        foldAggregation.sumAggregateInTimeWin(TopNOptions.SRC_IP_ADDR, 2, 1, 10).print();
 
-        Map<String, String> config = new HashMap<>();
-        // This instructs the sink to emit after every element, otherwise they would be buffered
-        config.put("bulk.flush.max.actions", "100");
-        config.put("cluster.name", "elasticsearch");
-
-        List<InetSocketAddress> transports = new ArrayList<>();
-        transports.add(new InetSocketAddress(InetAddress.getByName("localhost"), 9300));
-
-        //TODO namming options in database
-        agg.cardinality(CardinalityOptions.PROTOCOL, 10, 100)
-                .addSink(new ElasticsearchSink<>(config, transports, new ElasticSearchSinkFunction()));
-
-        agg.sumAggregateInTimeWin(TopNOptions.SRC_IP_ADDR, 1, 10).print();
-
-        env.execute("CEP monitoring job");
+        env.execute("job");
     }
+
 }
