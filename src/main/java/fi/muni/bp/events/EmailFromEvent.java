@@ -68,6 +68,9 @@ public class EmailFromEvent {
         if (relay_ip == null){
             this.relay_ip = relay;
         }
+        if (msgid == null){
+            this.msgid = "email event without msgid";
+        }
     }
 
 

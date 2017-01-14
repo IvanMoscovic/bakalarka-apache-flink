@@ -44,8 +44,7 @@ public class FoldAggregation {
      * @param topN - number of results
      * @return List with topN Tuples<ip_addr, bytes sum>
      */
-    public DataStream<List<Tuple2<String, Long>>> sumAggregateInTimeWin(TopNOptions key
-            , int timeWindowInSec, int slide, int topN) {
+    public DataStream<List<Tuple2<String, Long>>> sumAggregateInTimeWin(TopNOptions key, int timeWindowInSec, int slide, int topN) {
 
         return this.dataStream
                 .keyBy(key.toString())
@@ -58,7 +57,7 @@ public class FoldAggregation {
                     public Tuple3<String, Long, StreamSummary> fold(Tuple3<String, Long, StreamSummary> stringLongStreamSummaryTuple3, ConnectionEvent o) throws Exception {
                         String ip = o.getSrc_ip_addr();
                         long bytes = stringLongStreamSummaryTuple3.f1 + o.getBytes();
-                        streamSummary.offer(ip, Math.toIntExact(bytes));
+                        streamSummary.offer(ip, Math.toIntExact(o.getBytes()));
 
                         return Tuple3.of(ip, bytes, streamSummary);
                     }

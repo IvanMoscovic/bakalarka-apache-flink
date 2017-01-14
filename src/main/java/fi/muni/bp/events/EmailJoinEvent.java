@@ -10,6 +10,7 @@ import java.util.List;
 public class EmailJoinEvent {
 
     private String sendmail_uid;
+    private String msgid;
     private String qid;
     private DateTime fromTimestamp;
     private DateTime toTimestamp;
@@ -22,7 +23,7 @@ public class EmailJoinEvent {
     private int dsn_2;
     private int dsn_3;
 
-    public EmailJoinEvent(String sendmail_uid, String qid, DateTime fromTimestamp,
+    public EmailJoinEvent(String sendmail_uid, String msgid, String qid, DateTime fromTimestamp,
                           DateTime toTimestamp, String relay_ip, String from, String from_domain,
                           int dsn_1, List<String> to_domains, int dsn_3, int dsn_2, String strTo_domains) {
         this.sendmail_uid = sendmail_uid;
@@ -40,6 +41,14 @@ public class EmailJoinEvent {
     }
 
     public EmailJoinEvent() {
+    }
+
+    public String getMsgid() {
+        return msgid;
+    }
+
+    public void setMsgid(String msgid) {
+        this.msgid = msgid;
     }
 
     public String getStrTo_domains() {
@@ -143,26 +152,32 @@ public class EmailJoinEvent {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        EmailJoinEvent that = (EmailJoinEvent) o;
+        EmailJoinEvent joinEvent = (EmailJoinEvent) o;
 
-        if (dsn_1 != that.dsn_1) return false;
-        if (dsn_2 != that.dsn_2) return false;
-        if (dsn_3 != that.dsn_3) return false;
-        if (sendmail_uid != null ? !sendmail_uid.equals(that.sendmail_uid) : that.sendmail_uid != null) return false;
-        if (qid != null ? !qid.equals(that.qid) : that.qid != null) return false;
-        if (fromTimestamp != null ? !fromTimestamp.equals(that.fromTimestamp) : that.fromTimestamp != null)
+        if (dsn_1 != joinEvent.dsn_1) return false;
+        if (dsn_2 != joinEvent.dsn_2) return false;
+        if (dsn_3 != joinEvent.dsn_3) return false;
+        if (sendmail_uid != null ? !sendmail_uid.equals(joinEvent.sendmail_uid) : joinEvent.sendmail_uid != null)
             return false;
-        if (toTimestamp != null ? !toTimestamp.equals(that.toTimestamp) : that.toTimestamp != null) return false;
-        if (relay_ip != null ? !relay_ip.equals(that.relay_ip) : that.relay_ip != null) return false;
-        if (from != null ? !from.equals(that.from) : that.from != null) return false;
-        if (from_domain != null ? !from_domain.equals(that.from_domain) : that.from_domain != null) return false;
-        return to_domains != null ? to_domains.equals(that.to_domains) : that.to_domains == null;
+        if (msgid != null ? !msgid.equals(joinEvent.msgid) : joinEvent.msgid != null) return false;
+        if (qid != null ? !qid.equals(joinEvent.qid) : joinEvent.qid != null) return false;
+        if (fromTimestamp != null ? !fromTimestamp.equals(joinEvent.fromTimestamp) : joinEvent.fromTimestamp != null)
+            return false;
+        if (toTimestamp != null ? !toTimestamp.equals(joinEvent.toTimestamp) : joinEvent.toTimestamp != null)
+            return false;
+        if (relay_ip != null ? !relay_ip.equals(joinEvent.relay_ip) : joinEvent.relay_ip != null) return false;
+        if (from != null ? !from.equals(joinEvent.from) : joinEvent.from != null) return false;
+        if (from_domain != null ? !from_domain.equals(joinEvent.from_domain) : joinEvent.from_domain != null)
+            return false;
+        if (to_domains != null ? !to_domains.equals(joinEvent.to_domains) : joinEvent.to_domains != null) return false;
+        return strTo_domains != null ? strTo_domains.equals(joinEvent.strTo_domains) : joinEvent.strTo_domains == null;
 
     }
 
     @Override
     public int hashCode() {
         int result = sendmail_uid != null ? sendmail_uid.hashCode() : 0;
+        result = 31 * result + (msgid != null ? msgid.hashCode() : 0);
         result = 31 * result + (qid != null ? qid.hashCode() : 0);
         result = 31 * result + (fromTimestamp != null ? fromTimestamp.hashCode() : 0);
         result = 31 * result + (toTimestamp != null ? toTimestamp.hashCode() : 0);
@@ -170,11 +185,10 @@ public class EmailJoinEvent {
         result = 31 * result + (from != null ? from.hashCode() : 0);
         result = 31 * result + (from_domain != null ? from_domain.hashCode() : 0);
         result = 31 * result + (to_domains != null ? to_domains.hashCode() : 0);
+        result = 31 * result + (strTo_domains != null ? strTo_domains.hashCode() : 0);
         result = 31 * result + dsn_1;
         result = 31 * result + dsn_2;
         result = 31 * result + dsn_3;
         return result;
     }
-
-
 }

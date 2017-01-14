@@ -86,12 +86,11 @@ public class AggregationsSlidingWindow {
      *
      * @param cardOpt - field for aggregation (enum possibilities src_port, dst_port, tos, protocol, tags
      * @param timeWindowInSec - length of window
-     * @return Tuple3 of Date (start of the Window), actual value of cardOpt, count7
+     * @return Tuple3 of Date (start of the Window), actual value of cardOpt, count
      * @param slide - slide of the window in sec
      * @param topN - number of result
      */
-    public DataStream<Tuple3<DateTime, String, Long>> cardinality(CardinalityOptions cardOpt,
-                                                              int timeWindowInSec, int slide, int topN){
+    public DataStream<Tuple3<DateTime, String, Long>> cardinality(CardinalityOptions cardOpt, int timeWindowInSec, int slide, int topN){
 
         return this.dataStream.keyBy(cardOpt.toString())
                 .window(SlidingEventTimeWindows.of(Time.seconds(timeWindowInSec), Time.seconds(slide)))

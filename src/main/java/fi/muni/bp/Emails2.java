@@ -3,6 +3,7 @@ package fi.muni.bp;
 import fi.muni.bp.events.EmailFromEvent;
 import fi.muni.bp.events.EmailJoinEvent;
 import fi.muni.bp.events.EmailToEvent;
+import fi.muni.bp.functions.EmailFunctions;
 import fi.muni.bp.functions.TimestampExtractor;
 import fi.muni.bp.source.MonitoringEventSource;
 import org.apache.flink.api.common.functions.FilterFunction;
@@ -54,8 +55,8 @@ public class Emails2 {
 
         DataStream<EmailJoinEvent> connectedStreams =
                 inputEventStream2.join(inputEventStream1)
-                        .where((KeySelector<EmailFromEvent, Object>) emailFromEvent -> emailFromEvent.getQid())
-                        .equalTo((KeySelector<EmailToEvent, Object>) emailToEvent -> emailToEvent.getQid())
+                        .where((KeySelector<EmailFromEvent, String>) emailFromEvent -> emailFromEvent.getQid())
+                        .equalTo((KeySelector<EmailToEvent, String>) emailToEvent -> emailToEvent.getQid())
                         .window(SlidingEventTimeWindows.of(Time.seconds(2),Time.seconds(1)))
                         .apply(new JoinFunction<EmailFromEvent, EmailToEvent, EmailJoinEvent>() {
                             @Override
@@ -64,7 +65,7 @@ public class Emails2 {
                             }
                         })
                         .filter(new FilterFunction<EmailJoinEvent>() {
-                            List<String> controls = new LinkedList<String>(Arrays.asList("gmail.com", "post.sk"));
+                            List<String> controls = new LinkedList<String>(Arrays.asList("muni.cz", "munipedie.cz", "munipedia.cz", "mupedie.cz", "mupedia.cz", "cerit.cz", "cerit-sc.cz", "metacentrum.cz"));
                             @Override
                             public boolean filter(EmailJoinEvent emailJoinEvent) throws Exception {
                                 if (!controls.contains(emailJoinEvent.getFrom_domain())){
@@ -79,9 +80,12 @@ public class Emails2 {
                             }
                         });
 
-        connectedStreams
-                .map((MapFunction<EmailJoinEvent, String>) emailJoinEvent -> emailJoinEvent.getFrom_domain())
-                .print();
+        EmailFunctions emailFunctions = new EmailFunctions(connectedStreams);
+        emailFunctions.msgid_cardinality(3,1).print();
+
+        /*connectedStreams
+                .map((MapFunction<EmailJoinEvent, String>) emailJoinEvent -> emailJoinEvent.getMsgid())
+                .print();*/
 
 
 
@@ -102,6 +106,7 @@ public class Emails2 {
         joinEvent.setTo_domains(toEvent.getTo_domains());
         joinEvent.setStrTo_domains(toEvent.getTo_domains().toString());
         joinEvent.setToTimestamp(toEvent.getTimestamp());
+        joinEvent.setMsgid(fromEvent.getMsgid());
         return joinEvent;
     }
 }
