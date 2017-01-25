@@ -3,6 +3,10 @@ package fi.muni.bp.functions;
 
 import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus;
 import fi.muni.bp.events.EmailJoinEvent;
+import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.FoldFunction;
+import org.apache.flink.api.common.functions.MapFunction;
+import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.tuple.Tuple3;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.functions.windowing.AllWindowFunction;
@@ -24,22 +28,23 @@ public class EmailFunctions {
         this.dataStream = dataStream;
     }
 
-    /*public DataStream msgid_cardinality(int timeWindowInSec, int slide){
+    public DataStream msgid_fcardinality(int timeWindowInSec, int slide){
 
-        return this.dataStream.keyBy("msgid")
-                .window(SlidingEventTimeWindows.of(Time.seconds(timeWindowInSec), Time.seconds(slide)))
-                .fold(Tuple2.of(null, 0L), new FoldFunction<EmailJoinEvent, Tuple2<String, Long>>() {
-
-                    private HyperLogLogPlus hyperLogLogPlus = new HyperLogLogPlus(10);
+        return this.dataStream.windowAll(SlidingEventTimeWindows.of(Time.seconds(timeWindowInSec), Time.seconds(slide)))
+                .fold(Tuple2.of(null, new HyperLogLogPlus(10)), new FoldFunction<EmailJoinEvent, Tuple2<String, HyperLogLogPlus>>() {
 
                     @Override
-                    public Tuple2<String, Long> fold(Tuple2<String, Long> dateTimeLongTuple2, EmailJoinEvent o) throws Exception {
-                        hyperLogLogPlus.offer(o.getMsgid());
-                        Long card = hyperLogLogPlus.cardinality();
-                        return Tuple2.of(o.getFromTimestamp().toString() + " ", card);
+                    public Tuple2<String, HyperLogLogPlus> fold(Tuple2<String, HyperLogLogPlus> dateTimeTuple2, EmailJoinEvent o) throws Exception {
+                        dateTimeTuple2.f1.offer(o.getMsgid());
+                        return Tuple2.of(o.getFromTimestamp().toString() + " ", dateTimeTuple2.f1);
+                    }
+                }).map(new MapFunction<Tuple2<String,HyperLogLogPlus>, Tuple2<String, Long>>() {
+                    @Override
+                    public Tuple2<String, Long> map(Tuple2<String, HyperLogLogPlus> stringHyperLogLogPlusTuple2) throws Exception {
+                        return Tuple2.of(stringHyperLogLogPlusTuple2.f0 ,stringHyperLogLogPlusTuple2.f1.cardinality());
                     }
                 });
-    }*/
+    }
 
     public DataStream msgid_cardinality(int timeWindowInSec, int slide) {
 

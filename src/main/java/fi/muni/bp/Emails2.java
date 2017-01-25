@@ -29,10 +29,7 @@ import java.util.List;
 
 @SuppressWarnings("ALL")
 public class Emails2 {
-
-    private static final String PATH0 = "C:/Users/Peeve/Desktop/nf";
-    private static final String PATH = "C:/Users/Peeve/Desktop/data.nfjson";
-    private static final String PATH2 = "C:/Users/Peeve/Desktop/testDoc2.txt";
+    ;
     private static final String FromPATH = "C:/Users/Peeve/Desktop/ivan-sendmail/sendmail/from.json";
     private static final String ToPATH = "C:/Users/Peeve/Desktop/ivan-sendmail/sendmail/to.json";
 
@@ -84,7 +81,7 @@ public class Emails2 {
         emailFunctions.msgid_cardinality(3,1).print();
 
         /*connectedStreams
-                .map((MapFunction<EmailJoinEvent, String>) emailJoinEvent -> emailJoinEvent.getMsgid())
+                .map((MapFunction<EmailJoinEvent, String>) emailJoinEvent -> emailJoinEvent.getFrom_domain() + " " + emailJoinEvent.getStrTo_domains())
                 .print();*/
 
 

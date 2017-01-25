@@ -29,9 +29,6 @@ import java.util.List;
 @SuppressWarnings({"unchecked", "Duplicates"})
 public class Emails {
 
-    private static final String PATH0 = "C:/Users/Peeve/Desktop/nf";
-    private static final String PATH = "C:/Users/Peeve/Desktop/data.nfjson";
-    private static final String PATH2 = "C:/Users/Peeve/Desktop/testDoc2.txt";
     private static final String FromPATH = "C:/Users/Peeve/Desktop/ivan-sendmail/sendmail/from.json";
     private static final String ToPATH = "C:/Users/Peeve/Desktop/ivan-sendmail/sendmail/to.json";
 
@@ -68,11 +65,13 @@ public class Emails {
 
         Table inputTable = tableEnv.fromDataStream(connectedStreams);
         tableEnv.registerFunction("myFilter", new MyFilter());
-        String predicate = sqlGenerator("gmail.com", "mail.ru");
-        Table resultTable = inputTable.filter(predicate);
+        String sqlStatement = sqlGenerator("muni.cz" ,"munipedie.cz", "munipedia.cz","mupedie.cz");
+        Table resultTable = inputTable.filter(sqlStatement);
+        //Table resultTable2 = resultTable.filter("myFilter(strTo_domains)");
 
         DataStream<EmailJoinEvent> joinEventDataStream = tableEnv.toDataStream(resultTable, EmailJoinEvent.class);
-        joinEventDataStream.map((MapFunction<EmailJoinEvent, String>) emailJoinEvent -> emailJoinEvent.getStrTo_domains()).print();
+        joinEventDataStream.map((MapFunction<EmailJoinEvent, String>) emailJoinEvent -> emailJoinEvent.getFrom_domain() + " " + emailJoinEvent.getStrTo_domains())
+                .print();
 
         env.execute("CEP monitoring job");
     }
@@ -112,7 +111,7 @@ public class Emails {
         public void eval(String domains) {
             String s = domains.substring(1, domains.length()-1);
             List<String> domainsList = new LinkedList<String>(Arrays.asList(s.split(",")));
-            List<String> control = Arrays.asList("gmail.com", "mail.ru");
+            List<String> control = Arrays.asList("muni.cz" ,"munipedie.cz", "munipedia.cz","mupedie.cz");
             for(String domain : domainsList) {
                 if (!control.contains(domain)){
                     collect(true);
